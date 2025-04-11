@@ -1,0 +1,362 @@
+CREATE DATABASE academia;
+USE academia;
+
+CREATE TABLE Plano_de_Assinatura (
+    id_plano_assinatura INT AUTO_INCREMENT PRIMARY KEY,
+    nome_plano VARCHAR(100) NOT NULL,
+    valor_mensal DECIMAL(10,2) NOT NULL,
+    descricao TEXT NOT NULL
+);
+
+CREATE TABLE Aluno (
+    id_Aluno INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL,
+    fk_id_plano_assinatura INT NULL,
+    CONSTRAINT fk_aluno_plano FOREIGN KEY (fk_id_plano_assinatura) REFERENCES Plano_de_Assinatura(id_plano_assinatura) ON DELETE SET NULL
+);
+
+CREATE TABLE Instrutor (
+    id_instrutor INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL
+);
+
+CREATE TABLE Equipamento (
+    id_equipamento INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    descricao TEXT NOT NULL,
+    status ENUM('Disponivel', 'Manutencao', 'Indisponivel') NOT NULL
+);
+
+CREATE TABLE Pagamento (
+    id_pagamento INT AUTO_INCREMENT PRIMARY KEY,
+    data_pagamento DATE NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    status ENUM('Pago', 'Pendente', 'Atrasado') NOT NULL
+);
+
+CREATE TABLE Realiza (
+    fk_Aluno_id_Aluno INT,
+    fk_Pagamento_id_pagamento INT,
+    PRIMARY KEY (fk_Aluno_id_Aluno, fk_Pagamento_id_pagamento),
+    CONSTRAINT fk_realiza_aluno FOREIGN KEY (fk_Aluno_id_Aluno) REFERENCES Aluno(id_Aluno) ON DELETE CASCADE,
+    CONSTRAINT fk_realiza_pagamento FOREIGN KEY (fk_Pagamento_id_pagamento) REFERENCES Pagamento(id_pagamento) ON DELETE CASCADE
+);
+ALTER TABLE pagamento
+ADD COLUMN fk_id_Aluno INT(11);
+ALTER TABLE pagamento
+ADD CONSTRAINT fk_pagamento_aluno FOREIGN KEY (fk_id_Aluno) REFERENCES aluno(id_Aluno);
+
+CREATE TABLE Agendamento (
+    id_agendamento INT AUTO_INCREMENT PRIMARY KEY,
+    data_hora DATETIME NOT NULL,
+    duracao INT NOT NULL,
+    fk_Equipamento_id INT NOT NULL,
+    fk_Aluno_id_Aluno INT NOT NULL,
+    CONSTRAINT fk_agendamento_equipamento FOREIGN KEY (fk_Equipamento_id) REFERENCES Equipamento(id_equipamento),
+    CONSTRAINT fk_agendamento_aluno FOREIGN KEY (fk_Aluno_id_Aluno) REFERENCES Aluno(id_Aluno)
+);
+
+ALTER TABLE Agendamento ADD CONSTRAINT unique_agendamento UNIQUE (data_hora, fk_Equipamento_id);
+
+CREATE TABLE Agendado (
+    fk_Equipamento_id_equipamento INT,
+    fk_Agendamento_id_agendamento INT,
+    PRIMARY KEY (fk_Equipamento_id_equipamento, fk_Agendamento_id_agendamento),
+    CONSTRAINT fk_agendado_equipamento FOREIGN KEY (fk_Equipamento_id_equipamento) REFERENCES Equipamento(id_equipamento) ON DELETE CASCADE,
+    CONSTRAINT fk_agendado_agendamento FOREIGN KEY (fk_Agendamento_id_agendamento) REFERENCES Agendamento(id_agendamento) ON DELETE CASCADE
+);
+
+CREATE TABLE Marca (
+    fk_Aluno_id_Aluno INT,
+    fk_id_agendamento INT,
+    PRIMARY KEY (fk_Aluno_id_Aluno, fk_id_agendamento),
+    CONSTRAINT fk_marca_aluno FOREIGN KEY (fk_Aluno_id_Aluno) REFERENCES Aluno(id_Aluno) ON DELETE CASCADE,
+    CONSTRAINT fk_marca_agendamento FOREIGN KEY (fk_id_agendamento) REFERENCES Agendamento(id_agendamento) ON DELETE CASCADE
+);
+
+CREATE TABLE Plano_de_Treino (
+    id_plano_treino INT AUTO_INCREMENT PRIMARY KEY,
+    descricao TEXT NOT NULL,
+    data_criacao DATE NOT NULL,
+    fk_Aluno_id_Aluno INT NOT NULL,
+    fk_instrutor_id_instrutor INT NOT NULL,
+    CONSTRAINT fk_plano_aluno FOREIGN KEY (fk_Aluno_id_Aluno) REFERENCES Aluno(id_Aluno) ON DELETE CASCADE,
+    CONSTRAINT fk_plano_instrutor FOREIGN KEY (fk_instrutor_id_instrutor) REFERENCES Instrutor(id_instrutor) ON DELETE CASCADE
+);
+ALTER TABLE plano_de_treino ADD COLUMN ativo TINYINT(1) NOT NULL DEFAULT 1;
+
+
+
+CREATE TABLE Tem (
+    fk_id_plano_treino INT,
+    fk_Aluno_id_Aluno INT,
+    PRIMARY KEY (fk_id_plano_treino, fk_Aluno_id_Aluno),
+    CONSTRAINT fk_tem_plano FOREIGN KEY (fk_id_plano_treino) REFERENCES Plano_de_Treino(id_plano_treino) ON DELETE CASCADE,
+    CONSTRAINT fk_tem_aluno FOREIGN KEY (fk_Aluno_id_Aluno) REFERENCES Aluno(id_Aluno) ON DELETE CASCADE
+);
+
+CREATE TABLE Cria (
+    fk_Instrutor_id_instrutor INT,
+    fk_id_plano_treino INT,
+    PRIMARY KEY (fk_Instrutor_id_instrutor, fk_id_plano_treino),
+    CONSTRAINT fk_cria_instrutor FOREIGN KEY (fk_Instrutor_id_instrutor) REFERENCES Instrutor(id_instrutor) ON DELETE CASCADE,
+    CONSTRAINT fk_cria_plano FOREIGN KEY (fk_id_plano_treino) REFERENCES Plano_de_Treino(id_plano_treino) ON DELETE CASCADE
+);
+
+CREATE TABLE Telefone (
+    id_telefone INT AUTO_INCREMENT PRIMARY KEY,
+    numero VARCHAR(20) NOT NULL,
+    tipo ENUM('Residencial', 'Celular', 'Comercial') NOT NULL,
+    fk_id_aluno INT NULL,
+    fk_id_instrutor INT NULL,
+    CONSTRAINT fk_telefone_aluno FOREIGN KEY (fk_id_aluno) REFERENCES Aluno(id_Aluno) ON DELETE CASCADE,
+    CONSTRAINT fk_telefone_instrutor FOREIGN KEY (fk_id_instrutor) REFERENCES Instrutor(id_instrutor) ON DELETE CASCADE
+);
+
+CREATE TABLE Email (
+    id_email INT AUTO_INCREMENT PRIMARY KEY,
+    endereco VARCHAR(255) NOT NULL UNIQUE,
+    fk_id_aluno INT NULL,
+    fk_id_instrutor INT NULL,
+    CONSTRAINT fk_email_aluno FOREIGN KEY (fk_id_aluno) REFERENCES Aluno(id_Aluno) ON DELETE CASCADE,
+    CONSTRAINT fk_email_instrutor FOREIGN KEY (fk_id_instrutor) REFERENCES Instrutor(id_instrutor) ON DELETE CASCADE
+);
+
+ALTER TABLE email MODIFY COLUMN id_email INT AUTO_INCREMENT;
+
+
+INSERT INTO plano_de_Assinatura (id_plano_assinatura, nome_plano, valor_mensal, descricao) VALUES
+(10, 'Plano Basico', 100.00, 'Acesso a academia uma vez por dia acompanhado com personal'),
+(100, 'Plano Executivo', 1500.00, 'Acesso a academia ilimitada com acompanhamento completo (personal, nutricionista, cardiologista, fisioterapeuta, massagens, terapias e outros beneficios exclusivos)'),
+(1000, 'Plano Avancado', 500.00, 'Acesso a academia duas vezes por dia acompanhado com personal, nutricionista e sessoes de fisioterapia'),
+(1003, 'Plano Pro Plus', 2000.00, 'Acesso ilimitado a academia com acompanhamento completo (personal, nutricionista, cardiologista, fisioterapeuta, massagens, terapias, banhos de gelo e descontos exclusivos em suplementos e equipamentos)'),
+(1004, 'Plano Arte Marcial', 700.00, 'Acesso a academia com treinamentos focados em artes marciais, acompanhado por instrutores especializados e sessoes de autodefesa e combate');
+
+
+
+
+INSERT INTO Aluno (id_aluno, nome, cpf, fk_id_plano_assinatura)
+VALUES
+    (10, 'Mikaio Marinho', '144.105.487-24', 10),
+    (20, 'Mikael Marinho', '123.554.140-68', 1000),
+    (30, 'Larissa Maciel Belarmino', '123.555.455-58', 1000),
+    (40, 'Ianna Daya Passos', '456.145.147-58', 100),
+    (50, 'Marcelo Portela Sousa', '123.456.789-10', 100);
+
+
+
+INSERT INTO instrutor (id_instrutor, nome, cpf)
+VALUES
+    (1, 'Jose Joventino', '235.164.988-56'),  
+    (2, 'Mariana Marinho', '023.252.164-12'),
+    (3, 'Gleice Marinho', '022.242.644-32'),   
+    (4, 'Renato Laercio', '254.552.788-89'),
+    (5, 'Bitelo', '123.456.789-10'),
+    (6, 'Leo Stronda', '234.567.890-12');  
+
+
+
+-- 5 Telefones Residenciais
+INSERT INTO telefone (numero, tipo, fk_id_aluno, fk_id_instrutor) 
+VALUES 
+('83988140000', 'Residencial', 10, NULL),
+('83988140001', 'Residencial', 20, NULL),
+('83988140002', 'Residencial', 30, NULL),
+('83988140003', 'Residencial', 40, NULL),
+('83988140004', 'Residencial', 50, NULL);
+
+-- 5 Telefones Comerciais
+INSERT INTO telefone (numero, tipo, fk_id_aluno, fk_id_instrutor) 
+VALUES 
+('83988140005', 'Comercial', NULL, 1),
+('83988140006', 'Comercial', NULL, 2),
+('83988140007', 'Comercial', NULL, 3),
+('83988140008', 'Comercial', NULL, 4),
+('83988140009', 'Comercial', NULL, 5);
+
+-- 5 Celulares
+INSERT INTO telefone (numero, tipo, fk_id_aluno, fk_id_instrutor) 
+VALUES 
+('11912345679', 'Celular', 10, NULL),
+('11912345680', 'Celular', 20, NULL),
+('11912345681', 'Celular', 30, NULL),
+('11912345682', 'Celular', 40, NULL),
+('11912345683', 'Celular', NULL, 6);
+
+
+
+-- Emails para os alunos
+INSERT INTO email (endereco, fk_id_aluno, fk_id_instrutor) 
+VALUES 
+('MikaelMarinhoAluno@gmail.com', 10, NULL),
+('LarissaMacielAluno@gmail.com', 20, NULL),
+('IannaDayaPassosAluno@gmail.com', 30, NULL),
+('MarceloPortelaAluno@gmail.com', 40, NULL),
+('MikaioMarinhoAluno@gmail.com', 50, NULL);
+
+-- Emails para os instrutores
+INSERT INTO email (endereco, fk_id_aluno, fk_id_instrutor) 
+VALUES 
+('joao.silva@academia.com', NULL, 1),
+('maria.oliveira@academia.com', NULL, 2),
+('jose.joventino@academia.com', NULL, 3),
+('mariana.marinho@academia.com', NULL, 4),
+('bitelo@academia.com', NULL, 5), 
+('leo.stronda@academia.com', NULL, 6);
+
+
+
+-- 5 Planos de Treino Ativos
+INSERT INTO plano_de_treino (id_plano_treino, descricao, data_criacao, fk_Aluno_id_Aluno, fk_instrutor_id_instrutor, ativo)
+VALUES
+    (11, 'Treino Premium - Força e Condicionamento', '2025-03-06', 10, 1, 1),   -- Plano Ativo para aluno 10
+    (12, 'Treino Premium - Resistência e Cardio', '2025-03-06', 20, 2, 1),      -- Plano Ativo para aluno 20
+    (13, 'Treino Intermediário - Hipertrofia e Definição', '2025-03-06', 30, 3, 1), -- Plano Ativo para aluno 30
+    (14, 'Treino Intermediário - Mobilidade e Flexibilidade', '2025-03-06', 40, 4, 1), -- Plano Ativo para aluno 40
+    (15, 'Treino Básico - Iniciação em Musculação', '2025-03-06', 50, 5, 1);     -- Plano Ativo para aluno 50
+
+-- 5 Planos de Treino Inativos
+INSERT INTO plano_de_treino (id_plano_treino, descricao, data_criacao, fk_Aluno_id_Aluno, fk_instrutor_id_instrutor, ativo)
+VALUES
+    (16, 'Treino Básico - Controle de Peso', '2025-03-06', 50, 6, 0),          -- Plano Inativo para aluno 50
+    (17, 'Plano Pro Plus - Acesso Ilimitado', '2025-03-06', 10, 5, 0),           -- Plano Inativo para aluno 10
+    (18, 'Plano com Arte Marcial - Defesa Pessoal', '2025-03-06', 20, 6, 0),     -- Plano Inativo para aluno 20
+    (19, 'Treino Intermediário - Hipertrofia e Definição', '2025-03-06', 30, 3, 0), -- Plano Inativo para aluno 30
+    (20, 'Treino Premium - Resistência e Cardio', '2025-03-06', 20, 2, 0);       -- Plano Inativo para aluno 20
+
+
+
+
+-- Equipamentos em Manutenção
+INSERT INTO equipamento (id_equipamento, nome, descricao, status)
+VALUES 
+(1, 'Smith Machine', 'Máquina guiada para agachamentos e supino.', 'Manutencao'),
+(2, 'Puxador Costas', 'Máquina para desenvolvimento dos músculos dorsais.', 'Manutencao'),
+(3, 'Mesa Flexora', 'Máquina para treino de posteriores da coxa.', 'Manutencao'),
+(4, 'Extensora', 'Máquina para fortalecimento do quadríceps.', 'Manutencao'),
+(5, 'Crossover', 'Equipamento de polia ajustável para exercícios variados de membros superiores.', 'Manutencao');
+
+-- Equipamentos Disponíveis
+INSERT INTO equipamento (id_equipamento, nome, descricao, status)
+VALUES 
+(6, 'Esteira', 'Equipamento para corrida e caminhada com ajuste de inclinação e velocidade.', 'Disponivel'),
+(7, 'Bicicleta Ergométrica', 'Simula uma bicicleta para treinos aeróbicos e resistência.', 'Disponivel'),
+(8, 'Leg Press 45°', 'Máquina para treino de pernas, focando quadríceps e glúteos.', 'Disponivel'),
+(9, 'Supino Reto', 'Banco com suporte para levantamento de peso no peitoral.', 'Disponivel'),
+(10, 'Remo Sentado', 'Máquina para treino de costas e fortalecimento do core.', 'Disponivel');
+
+-- Equipamentos Indisponíveis
+INSERT INTO equipamento (id_equipamento, nome, descricao, status)
+VALUES 
+(11, 'Halteres', 'Conjunto de pesos livres para exercícios variados.', 'Indisponivel'),
+(12, 'Barra Olímpica', 'Barra utilizada para levantamento de peso com anilhas.', 'Indisponivel'),
+(13, 'Máquina de Abdominal', 'Equipamento para treino de abdominal.', 'Indisponivel'),
+(14, 'Banco Inclinado', 'Banco ajustável para diversos tipos de exercícios com pesos.', 'Indisponivel'),
+(15, 'Máquina de Leg Curl', 'Equipamento para treino de posteriores da coxa.', 'Indisponivel');
+
+
+
+
+
+
+-- Pagamentos Pendentes
+INSERT INTO pagamento (id_pagamento, data_pagamento, valor, status, fk_id_Aluno)
+VALUES 
+(1, '2024-03-15', 100.00, 'Pendente', 10),   -- Mikael Marinho - Plano Básico
+(2, '2024-03-15', 1500.00, 'Pendente', 20),  -- Larissa Maciel Belarmino - Plano Executivo
+(3, '2024-03-15', 500.00, 'Pendente', 30),   -- Ianna Daya Passos - Plano Avançado
+(4, '2024-03-15', 2000.00, 'Pendente', 40),  -- Marcelo Portela Sousa - Plano Pro Plus
+(5, '2024-03-15', 700.00, 'Pendente', 50);   -- Mikaio Marinho - Plano Arte Marcial
+
+-- Pagamentos Atrasados
+INSERT INTO pagamento (id_pagamento, data_pagamento, valor, status, fk_id_Aluno)
+VALUES 
+(6, '2024-03-01', 100.00, 'Atrasado', 10),   -- Mikael Marinho - Plano Básico
+(7, '2024-03-01', 1500.00, 'Atrasado', 20),  -- Larissa Maciel Belarmino - Plano Executivo
+(8, '2024-03-01', 500.00, 'Atrasado', 30),   -- Ianna Daya Passos - Plano Avançado
+(9, '2024-03-01', 2000.00, 'Atrasado', 40),  -- Marcelo Portela Sousa - Plano Pro Plus
+(10, '2024-03-01', 700.00, 'Atrasado', 50);  -- Mikaio Marinho - Plano Arte Marcial
+
+-- Pagamentos Pagos
+INSERT INTO pagamento (id_pagamento, data_pagamento, valor, status, fk_id_Aluno)
+VALUES 
+(11, '2024-03-10', 100.00, 'Pago', 10),   -- Mikael Marinho - Plano Básico
+(12, '2024-03-10', 1500.00, 'Pago', 20),  -- Larissa Maciel Belarmino - Plano Executivo
+(13, '2024-03-10', 500.00, 'Pago', 30),   -- Ianna Daya Passos - Plano Avançado
+(14, '2024-03-10', 2000.00, 'Pago', 40),  -- Marcelo Portela Sousa - Plano Pro Plus
+(15, '2024-03-10', 700.00, 'Pago', 50);   -- Mikaio Marinho - Plano Arte Marcial
+
+
+
+
+-- Agendamentos com equipamentos disponíveis
+INSERT INTO AGENDAMENTO (id_agendamento, data_hora, duracao, fk_Equipamento_id, fk_Aluno_id_Aluno)
+VALUES
+    (1, '2024-03-10 08:00:00', 60, 6, 10),   -- Mikael Marinho usando a Esteira (id 6)
+    (2, '2024-03-10 09:30:00', 45, 7, 20),   -- Larissa Maciel usando a Bicicleta Ergométrica (id 7)
+    (3, '2024-03-10 10:15:00', 30, 8, 30),   -- Ianna Daya usando o Leg Press 45° (id 8)
+    (4, '2024-03-10 11:00:00', 60, 9, 40),   -- Marcelo Portela usando o Supino Reto (id 9)
+    (5, '2024-03-11 07:00:00', 90, 10, 50);  -- Mikaio Marinho usando o Remo Sentado (id 10)
+
+
+
+
+INSERT INTO REALIZA (fk_Aluno_id_Aluno, fk_Pagamento_id_pagamento)
+VALUES
+(10, 11),   -- Mikael Marinho realizou o pagamento 11
+(20, 12),   -- Mikael Marinho realizou o pagamento 12
+(30, 13),   -- Larissa Maciel realizou o pagamento 13
+(40, 14),  -- Ianna Daya realizou o pagamento 14
+(50, 15);  -- Marcelo Portela realizou o pagamento 15
+
+
+
+
+
+
+INSERT INTO cria (fk_instrutor_id_instrutor, fk_id_plano_treino)
+VALUES
+    (1, 11),  -- Jose Joventino criou "Treino Premium - Força e Condicionamento" (id_plano_treino = 11)
+    (2, 12),  -- Mariana Marinho criou "Treino Premium - Resistência e Cardio" (id_plano_treino = 12)
+    (3, 13),  -- Gleice Marinho criou "Treino Intermediário - Hipertrofia e Definição" (id_plano_treino = 13)
+    (4, 14),  -- Renato Laercio criou "Treino Intermediário - Mobilidade e Flexibilidade" (id_plano_treino = 14)
+    (5, 15),  -- Bitelo criou "Treino Básico - Iniciação à Musculação" (id_plano_treino = 15)
+    (6, 16),  -- Leo Stronda criou "Treino Básico - Controle de Peso" (id_plano_treino = 16)
+    (5, 17),  -- Bitelo criou "Plano Pro Plus - Acesso Ilimitado" (id_plano_treino = 17)
+    (6, 18);  -- Leo Stronda criou "Plano com Arte Marcial - Defesa Pessoal" (id_plano_treino = 18)
+
+
+
+INSERT INTO agendado (fk_Equipamento_id_equipamento, fk_Agendamento_id_agendamento)
+VALUES
+    (1, 1),  -- Equipamento Esteira foi agendado na reserva 1
+    (2, 2),  -- Equipamento Bicicleta Ergométrica foi agendado na reserva 2
+    (3, 3),  -- Equipamento Leg Press 45° foi agendado na reserva 3
+    (4, 4),  -- Equipamento Supino Reto foi agendado na reserva 4
+    (5, 5); -- Equipamento Remo Sentado foi agendado na reserva 5
+
+
+
+
+INSERT INTO MARCA (fk_Aluno_id_Aluno, fk_id_agendamento)
+VALUES
+    (10, 1),   -- Mikael Marinho marcou o agendamento 1
+    (20, 2),   -- Larissa Maciel marcou o agendamento 2
+    (30, 3),  -- Ianna Daya marcou o agendamento 3
+    (40, 4),  -- Marcelo Portela marcou o agendamento 4
+    (50, 5); -- Mikaio Marinho marcou o agendamento 5
+
+
+INSERT INTO tem (fk_id_plano_treino, fk_Aluno_id_Aluno)
+VALUES
+    (11, 10),  -- Mikael Marinho tem o plano de treino 'Treino Premium - Força e Condicionamento' (Plano 11)
+    (12, 20),  -- Larissa Maciel tem o plano de treino 'Treino Premium - Resistência e Cardio' (Plano 12)
+    (13, 30),  -- Ianna Daya tem o plano de treino 'Treino Intermediário - Hipertrofia e Definição' (Plano 13)
+    (14, 40),  -- Marcelo Portela tem o plano de treino 'Treino Intermediário - Mobilidade e Flexibilidade' (Plano 14)
+    (15, 50);  -- Mikaio Marinho tem o plano de treino 'Treino Básico - Iniciação à Musculação' (Plano 15)
+
+
+
+

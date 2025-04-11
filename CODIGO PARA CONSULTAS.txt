@@ -1,0 +1,107 @@
+-- 1: Total de pagamentos recebidos por aluno
+SELECT a.nome, SUM(p.valor) AS total_pago
+FROM aluno a
+JOIN pagamento p ON a.id_Aluno = p.fk_id_Aluno
+GROUP BY a.nome;
+
+-- 2: Ver todos os agendamentos dos equipamentos
+SELECT e.nome AS equipamento, ag.data_hora, a.nome AS aluno FROM equipamento e JOIN agendamento ag ON  e.id_equipamento = ag.fk_Equipamento_id JOIN aluno a ON ag.fk_Aluno_id_Aluno = a.id_Aluno;
+
+-- 3: Equipamentos mais utilizados
+SELECT e.nome, COUNT(ag.id_agendamento) AS  total_agendamentos FROM equipamento e JOIN agendamento ag ON e.id_equipamento = ag.fk_Equipamento_id GROUP BY e.nome ORDER BY total_agendamentos DESC;
+
+-- 4: Nome do Aluno, Plano e Valor mensal 
+SELECT a.nome, pa.nome_plano, pa.valor_mensal
+FROM aluno a JOIN plano_de_assinatura pa ON a.fk_id_plano_assinatura = pa.id_plano_assinatura;
+
+-- 5: Alunos com pagamentos pendentes
+SELECT a.nome, p.valor, p.status FROM aluno a
+JOIN pagamento p ON a.id_Aluno = p.fk_id_Aluno
+WHERE p.status = 'Pendente';
+
+-- 6: Número de agendamentos de cada aluno.
+SELECT a.nome AS aluno, COUNT(ag.id_agendamento) AS numero_agendamentos FROM agendamento ag JOIN aluno a ON ag.fk_Aluno_id_Aluno = a.id_Aluno GROUP BY a.id_Aluno;
+
+-- 7: Alunos que têm planos de treinos ativos.
+SELECT a.nome, pt.descricao
+FROM aluno a
+JOIN plano_de_treino pt ON a.id_Aluno = pt.fk_Aluno_id_Aluno
+WHERE pt.ativo = 1;
+
+-- 8: Instrutores com mais alunos
+SELECT i.nome, COUNT(c.fk_id_plano_treino) AS total_alunos
+FROM instrutor i JOIN cria c ON i.id_instrutor = c.fk_Instrutor_id_instrutor GROUP BY i.nome ORDER BY total_alunos DESC;
+
+-- 9: Pagamentos Pagos por aluno
+SELECT a.nome, p.valor, p.data_pagamento FROM aluno a JOIN pagamento p ON a.id_Aluno = p.fk_id_Aluno WHERE p.status = 'Pago'; 
+
+-- 10: Equipamentos e seu status de uso
+SELECT e.nome, e.status, COUNT(ag.id_agendamento) AS total_agendamentos FROM equipamento e LEFT JOIN agendamento ag ON e.id_equipamento = ag.fk_Equipamento_id
+GROUP BY e.nome, e.status;
+
+-- 11: Total de alunos por plano de assinatura
+SELECT pt.descricao AS nome_plano, COUNT(a.id_Aluno) AS total_alunos FROM plano_de_treino pt LEFT JOIN tem t ON pt.id_plano_treino = t.fk_id_plano_treino LEFT JOIN aluno a ON t.fk_Aluno_id_Aluno = a.id_Aluno GROUP BY pt.descricao;
+
+-- 12: Total de Alunos com plano de treino desativados.
+SELECT a.id_Aluno, a.nome FROM aluno a JOIN plano_de_treino pt ON a.id_Aluno = pt.fk_Aluno_id_Aluno WHERE pt.ativo = 0;
+
+-- 13: Verificar se os alunos realmente estão agendando treinos.
+SELECT a.nome, COUNT(ag.id_agendamento) AS total_agendamentos FROM aluno a LEFT JOIN agendamento ag ON a.id_Aluno = ag.fk_Aluno_id_Aluno GROUP BY a.nome
+HAVING total_agendamentos > 0;
+
+-- 14: Total de agendamentos por dia.
+SELECT DATE(ag.data_hora) AS data, COUNT(ag.id_agendamento) AS total_agendamentos FROM agendamento ag GROUP BY DATE(ag.data_hora);
+
+-- 15: Equipamentos mais utilizados em agendamentos.
+SELECT e.nome AS equipamento, COUNT(ag.id_agendamento) AS total_agendamentos FROM equipamento e JOIN agendamento ag ON e.id_equipamento = ag.fk_Equipamento_id
+GROUP BY e.nome ORDER BY total_agendamentos DESC;
+
+-- OPERAÇÕES DE REMOÇÃO: 
+-- 1 : Remoção de um agendamento específico (com impacto em mais de uma tabela).
+DELETE FROM agendado WHERE fk_Agendamento_id_agendamento = 1;
+DELETE FROM marca WHERE fk_id_agendamento = 1;
+DELETE FROM agendamento WHERE id_agendamento = 1;
+
+-- 2 : Remoção de aluno e seus dados relacionados.
+
+DELETE FROM email WHERE fk_id_aluno = 1;
+DELETE FROM telefone WHERE fk_id_aluno = 1;
+DELETE FROM tem WHERE fk_Aluno_id_Aluno = 1;
+DELETE FROM cria WHERE fk_Instrutor_id_instrutor = 1;
+DELETE FROM plano_de_treino WHERE fk_Aluno_id_Aluno = 1;
+DELETE FROM agendamento WHERE fk_Aluno_id_Aluno = 1;
+DELETE FROM aluno WHERE id_Aluno = 1;
+
+-- 3 : Remoção de equipamento em manutenção.
+DELETE FROM agendado WHERE fk_Equipamento_id_equipamento = 9;
+DELETE FROM agendamento WHERE fk_Equipamento_id = 9;
+DELETE FROM equipamento WHERE id_equipamento = 9;
+
+-- OPERAÇÕES DE ATUALIZAÇÃO.
+-- 1 : Atualização do status de pagamento para "Pago".
+UPDATE pagamento 
+SET status = 'Pago' 
+WHERE valor = 1000 AND status = 'Pendente';
+
+-- 2 : Atualização do plano de treino de um aluno com base no plano de assinatura.
+UPDATE plano_de_treino pt
+JOIN aluno a ON pt.fk_Aluno_id_Aluno = a.id_Aluno
+JOIN plano_de_assinatura pa ON a.fk_id_plano_assinatura = pa.id_plano_assinatura
+SET pt.descricao = pa.nome_plano
+WHERE pt.fk_Aluno_id_Aluno = 1;
+
+-- 3 : Atualização do status de um equipamento de "Disponível" para "Indisponível".
+UPDATE equipamento
+SET status = 'Indisponível'
+WHERE id_equipamento = 11;
+
+
+
+
+
+
+
+
+
+
+
